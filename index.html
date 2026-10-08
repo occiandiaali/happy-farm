@@ -1,0 +1,2158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+    <title>Voxel Farm Life: Harvest & Ranch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka+One&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        overflow: hidden;
+        background-color: #0f172a;
+      }
+      .font-pixel {
+        font-family: "Press Start 2P", cursive;
+      }
+      .font-heading {
+        font-family: "Fredoka One", cursive;
+      }
+      .pixel-card {
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(14px);
+        border: 3px solid #3b82f6;
+        box-shadow:
+          0 8px 0 #1d4ed8,
+          0 12px 24px rgba(0, 0, 0, 0.7);
+      }
+      .pixel-btn {
+        transition: all 0.1s ease;
+        box-shadow: 0 4px 0 #1e3a8a;
+      }
+      .pixel-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #1e3a8a;
+      }
+      .pixel-btn-green {
+        background-color: #22c55e;
+        box-shadow: 0 4px 0 #15803d;
+      }
+      .pixel-btn-green:active {
+        box-shadow: 0 1px 0 #15803d;
+      }
+      .pixel-btn-amber {
+        background-color: #f59e0b;
+        box-shadow: 0 4px 0 #b45309;
+      }
+      .pixel-btn-amber:active {
+        box-shadow: 0 1px 0 #b45309;
+      }
+      .pixel-btn-red {
+        background-color: #ef4444;
+        box-shadow: 0 4px 0 #991b1b;
+      }
+      .pixel-btn-red:active {
+        box-shadow: 0 1px 0 #991b1b;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+        border-radius: 4px;
+      }
+      @keyframes toastUp {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, 20px) scale(0.9);
+        }
+        15% {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+        85% {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -20px) scale(0.9);
+        }
+      }
+      .animate-toast {
+        animation: toastUp 3.2s ease forwards;
+      }
+    </style>
+  </head>
+  <body
+    class="w-screen h-screen relative bg-slate-950 text-white overflow-hidden"
+  >
+    <div
+      id="webgl-container"
+      class="absolute inset-0 w-full h-full z-0 cursor-pointer"
+    ></div>
+
+    <!-- BACKGROUND AUDIO ELEMENT -->
+    <!-- Replace src below with your custom local file e.g., src="audio/bg_music.mp3" -->
+    <audio
+      id="bg-music"
+      loop
+      preload="auto"
+      src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-farm-chill-112191.mp3"
+    ></audio>
+
+    <!-- MAIN MENU OVERLAY -->
+    <div
+      id="modal-main-menu"
+      class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex flex-col items-center justify-center p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-6 bg-slate-900 text-center flex flex-col items-center gap-6 border-4 border-emerald-500"
+      >
+        <div>
+          <h1
+            class="font-heading text-3xl sm:text-4xl text-emerald-400 drop-shadow-md"
+          >
+            🌾 VOXEL FARM LIFE
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-300 mt-2 font-medium">
+            Harvest Crops • Ranch Livestock • Build Wealth
+          </p>
+        </div>
+
+        <div class="w-full flex flex-col gap-3">
+          <button
+            id="btn-menu-continue"
+            onclick="resumeGameFromMenu()"
+            class="hidden pixel-btn pixel-btn-green w-full py-3.5 rounded-2xl font-heading text-base text-white"
+          >
+            ▶️ Continue Farm Life
+          </button>
+          <button
+            onclick="openCareerModal()"
+            class="pixel-btn pixel-btn-amber w-full py-3.5 rounded-2xl font-heading text-base text-white"
+          >
+            🌱 Start New Game
+          </button>
+        </div>
+
+        <div class="text-[11px] text-slate-400 flex items-center gap-2">
+          <span>Audio Synth Ready</span> • <span>Voxel Engine v2.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP HUD STATUS BAR -->
+    <!-- <header
+      id="game-hud"
+      class="hidden absolute top-0 left-0 right-0 z-10 p-2 sm:p-4 pointer-events-none flex justify-between items-start"
+    >
+      <div
+        class="pointer-events-auto bg-slate-900/90 border-2 border-emerald-500 rounded-2xl p-2 sm:p-3 flex items-center gap-3 shadow-2xl backdrop-blur-md"
+      >
+        <div
+          class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-2xl font-bold shadow-inner border-2 border-emerald-400"
+          id="avatar-icon"
+        >
+          🧑‍🌾
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span
+              id="player-name"
+              class="font-heading text-sm sm:text-base text-emerald-300"
+              >Farmer John</span
+            >
+            <span
+              id="player-role-badge"
+              class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-700"
+              >Crop Specialist</span
+            >
+          </div>
+          <div
+            class="flex items-center gap-3 mt-0.5 text-xs sm:text-sm font-semibold"
+          >
+            <span class="text-amber-400 flex items-center gap-1 font-pixel"
+              ><span class="text-base">🪙</span>
+              <span id="stat-gold">300</span></span
+            >
+            <span class="text-purple-300 flex items-center gap-1 font-pixel"
+              ><span class="text-base">⭐</span> Lvl
+              <span id="stat-level">1</span></span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="pointer-events-auto bg-slate-900/90 border-2 border-blue-500 rounded-2xl p-2 sm:p-3 text-right flex flex-col items-end shadow-2xl backdrop-blur-md"
+      >
+        <div class="flex items-center gap-2">
+          <span id="weather-icon" class="text-xl sm:text-2xl animate-bounce"
+            >☀️</span
+          >
+          <span
+            id="weather-text"
+            class="font-heading text-xs sm:text-sm text-amber-300"
+            >Sunny</span
+          >
+        </div>
+        <div
+          class="text-[10px] sm:text-xs text-slate-300 font-mono mt-0.5"
+          id="game-time-display"
+        >
+          Day 1 - 08:00 AM
+        </div>
+        <div class="flex sm:flex-col md:flex-row items-center gap-1.5 mt-2">
+          <button
+            id="btn-dev-toggle"
+            onclick="toggleDevFastMode()"
+            class="px-2 py-1 rounded-lg bg-amber-900/80 hover:bg-amber-800 text-[10px] sm:text-xs text-amber-200 border border-amber-600 font-bold"
+          >
+            ⏩ Fast Mode: Off
+          </button>
+          <button
+            id="btn-music-toggle"
+            onclick="toggleMusic()"
+            class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs border border-slate-600"
+          >
+            🎵 Music: Off
+          </button>
+          <button
+            id="btn-audio-toggle"
+            onclick="toggleSFX()"
+            class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs border border-slate-600"
+          >
+            🔊 SFX: On
+          </button>
+          <button
+            onclick="exitToMainMenu()"
+            class="px-2.5 py-1 rounded-lg bg-rose-900 hover:bg-rose-800 text-[10px] sm:text-xs text-rose-200 border border-rose-600 font-bold"
+          >
+            🚪 Exit
+          </button>
+        </div>
+      </div>
+    </header> -->
+    <header
+      id="game-hud"
+      class="hidden absolute top-0 left-0 right-0 z-10 p-2 sm:p-4 pointer-events-none flex flex-col sm:flex-row justify-between items-stretch sm:items-start gap-2 max-w-full overflow-hidden"
+    >
+      <!-- Player Info Card -->
+      <div
+        class="pointer-events-auto bg-slate-900/90 border-2 border-emerald-500 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-3 shadow-2xl backdrop-blur-md"
+      >
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div
+            class="w-8 h-8 sm:w-12 sm:h-12 shrink-0 rounded-lg sm:rounded-xl bg-emerald-600 flex items-center justify-center text-lg sm:text-2xl font-bold shadow-inner border-2 border-emerald-400"
+            id="avatar-icon"
+          >
+            🧑‍🌾
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span
+                id="player-name"
+                class="font-heading text-xs sm:text-base text-emerald-300 truncate max-w-[100px] sm:max-w-none"
+                >Farmer John</span
+              >
+              <span
+                id="player-role-badge"
+                class="text-[9px] sm:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-700 whitespace-nowrap"
+                >Crop Specialist</span
+              >
+            </div>
+            <div
+              class="flex items-center gap-2.5 sm:gap-3 mt-0.5 text-xs sm:text-sm font-semibold"
+            >
+              <span class="text-amber-400 flex items-center gap-1 font-pixel"
+                ><span class="text-xs sm:text-base">🪙</span>
+                <span id="stat-gold">300</span></span
+              >
+              <span class="text-purple-300 flex items-center gap-1 font-pixel"
+                ><span class="text-xs sm:text-base">⭐</span> Lvl
+                <span id="stat-level">1</span></span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather, Time & Controls Card -->
+      <div
+        class="pointer-events-auto bg-slate-900/90 border-2 border-blue-500 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 flex flex-col items-end shadow-2xl backdrop-blur-md shrink-0"
+      >
+        <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+          <div
+            class="text-[9px] sm:text-xs text-slate-300 font-mono"
+            id="game-time-display"
+          >
+            Day 1 - 08:00 AM
+          </div>
+          <div class="flex items-center gap-1">
+            <span id="weather-icon" class="text-base sm:text-2xl animate-bounce"
+              >☀️</span
+            >
+            <span
+              id="weather-text"
+              class="font-heading text-xs sm:text-sm text-amber-300"
+              >Sunny</span
+            >
+          </div>
+        </div>
+
+        <div
+          class="flex flex-wrap justify-end items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2 w-full"
+        >
+          <button
+            id="btn-dev-toggle"
+            onclick="toggleDevFastMode()"
+            class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-amber-900/80 hover:bg-amber-800 text-[9px] sm:text-xs text-amber-200 border border-amber-600 font-bold whitespace-nowrap"
+          >
+            ⏩ Fast: Off
+          </button>
+          <button
+            id="btn-music-toggle"
+            onclick="toggleMusic()"
+            class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[9px] sm:text-xs border border-slate-600 whitespace-nowrap"
+          >
+            🎵 Music: Off
+          </button>
+          <button
+            id="btn-audio-toggle"
+            onclick="toggleSFX()"
+            class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[9px] sm:text-xs border border-slate-600 whitespace-nowrap"
+          >
+            🔊 SFX: On
+          </button>
+          <button
+            onclick="exitToMainMenu()"
+            class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-rose-900 hover:bg-rose-800 text-[9px] sm:text-xs text-rose-200 border border-rose-600 font-bold whitespace-nowrap"
+          >
+            🚪 Exit
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- FLOATING TOAST CONTAINER (z-[9999] so toasts render above open modals) -->
+    <div
+      id="toast-container"
+      class="absolute top-28 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none w-11/12 max-w-md"
+    ></div>
+
+    <!-- BOTTOM HUD NAVIGATION -->
+    <nav
+      id="game-nav"
+      class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-[96%] max-w-lg bg-slate-900/95 border-2 border-slate-700 rounded-2xl p-1.5 sm:p-2 shadow-2xl backdrop-blur-md flex items-center justify-around gap-1"
+    >
+      <button
+        id="nav-btn-crops"
+        onclick="openModal('modal-crops')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">🌱</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading">Crops</span>
+      </button>
+      <button
+        id="nav-btn-livestock"
+        onclick="openModal('modal-livestock')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-amber-600 hover:bg-amber-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">🐮</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading"
+          >Livestock</span
+        >
+      </button>
+      <button
+        onclick="openModal('modal-shop')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">🛒</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading">Shop</span>
+      </button>
+      <button
+        onclick="openModal('modal-barn')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">📦</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading">Barn</span>
+      </button>
+      <button
+        onclick="openModal('modal-market')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">📈</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading">Market</span>
+      </button>
+      <button
+        onclick="openModal('modal-leaderboard')"
+        class="pixel-btn flex-1 py-2 px-1 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-white flex flex-col items-center justify-center gap-0.5"
+      >
+        <span class="text-lg sm:text-2xl">🏆</span>
+        <span class="text-[9px] sm:text-xs font-bold font-heading">Ranks</span>
+      </button>
+    </nav>
+
+    <!-- TILE INSPECTOR POPUP -->
+    <div
+      id="tile-inspector"
+      class="hidden absolute bottom-24 left-1/2 -translate-x-1/2 z-20 bg-slate-900/95 border-2 border-emerald-400 rounded-2xl p-3 shadow-2xl backdrop-blur-md w-80 flex flex-col gap-2"
+    >
+      <div
+        class="flex justify-between items-center border-b border-slate-700 pb-1"
+      >
+        <span id="tile-name" class="font-heading text-emerald-400 text-sm"
+          >Tilled Plot</span
+        >
+        <button
+          onclick="closeTileInspector()"
+          class="text-slate-400 hover:text-white font-bold text-xs"
+        >
+          ✕
+        </button>
+      </div>
+      <div
+        class="text-xs text-slate-300 flex flex-col gap-1"
+        id="tile-status-text"
+      >
+        Status: Empty Soil
+      </div>
+      <div id="tile-actions" class="grid grid-cols-2 gap-2 mt-1"></div>
+    </div>
+
+    <!-- MODAL 0: CAREER SELECTION MODAL -->
+    <div
+      id="modal-career"
+      class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-lg rounded-3xl p-5 sm:p-6 bg-slate-900 text-slate-100 flex flex-col gap-4 border-2 border-emerald-500"
+      >
+        <div class="text-center">
+          <h2 class="font-heading text-2xl sm:text-3xl text-emerald-400">
+            Choose Your Specialization
+          </h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Dedicated farm layout and bonuses will be generated based on your
+            choice.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div
+            id="card-spec-crop"
+            onclick="selectCareer('crop')"
+            class="cursor-pointer bg-slate-800/80 hover:bg-emerald-950/50 border-2 border-emerald-400 rounded-2xl p-4 flex flex-col items-center text-center"
+          >
+            <span class="text-4xl mb-1">🌾</span>
+            <h3 class="font-heading text-base text-emerald-300">
+              Crop Specialist
+            </h3>
+            <p class="text-[11px] text-slate-300 mt-1">
+              • Dedicated Planting Fields<br />
+              • +25% Crop Growth Speed<br />
+              • Starter Wheat & Corn Seeds
+            </p>
+          </div>
+          <div
+            id="card-spec-livestock"
+            onclick="selectCareer('livestock')"
+            class="cursor-pointer bg-slate-800/80 hover:bg-amber-950/50 border-2 border-slate-700 rounded-2xl p-4 flex flex-col items-center text-center"
+          >
+            <span class="text-4xl mb-1">🐄</span>
+            <h3 class="font-heading text-base text-amber-300">
+              Master Rancher
+            </h3>
+            <p class="text-[11px] text-slate-300 mt-1">
+              • Dedicated Barnyard & Paddocks<br />
+              • +30% Breeding Rate<br />
+              • Starter Chickens & Animal Feed
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-400"
+            >Farmer Name:</label
+          >
+          <input
+            type="text"
+            id="input-farmer-name"
+            value="Farmer Harvest"
+            class="bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-400"
+          />
+        </div>
+
+        <button
+          onclick="confirmCareerSelection()"
+          class="pixel-btn pixel-btn-green w-full py-3 rounded-xl font-heading text-base text-white text-center"
+        >
+          Begin Farming Life 🚜
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 1: CROPS SEED SACK MODAL -->
+    <div
+      id="modal-crops"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-emerald-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-emerald-400 flex items-center gap-2"
+          >
+            🌱 Seed Inventory
+          </h3>
+          <button
+            onclick="closeModal('modal-crops')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          id="crops-seed-list"
+          class="flex flex-col gap-2 overflow-y-auto pr-1"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: LIVESTOCK MANAGEMENT MODAL -->
+    <div
+      id="modal-livestock"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-amber-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-amber-400 flex items-center gap-2"
+          >
+            🐔 Livestock Pasture
+          </h3>
+          <button
+            onclick="closeModal('modal-livestock')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          id="livestock-list"
+          class="flex flex-col gap-2.5 overflow-y-auto pr-1"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: FIXED GENERAL STORE MODAL -->
+    <div
+      id="modal-shop"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-blue-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-blue-400 flex items-center gap-2"
+          >
+            🛒 General Store
+          </h3>
+          <button
+            onclick="closeModal('modal-shop')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="flex gap-2 border-b border-slate-800 pb-2">
+          <button
+            id="shop-tab-seeds"
+            onclick="switchShopTab('seeds')"
+            class="flex-1 py-1.5 text-xs font-bold rounded-xl bg-blue-600 text-white transition-all"
+          >
+            🌱 Seeds
+          </button>
+          <button
+            id="shop-tab-animals"
+            onclick="switchShopTab('animals')"
+            class="flex-1 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-slate-300 transition-all"
+          >
+            🐮 Animals
+          </button>
+          <button
+            id="shop-tab-supplies"
+            onclick="switchShopTab('supplies')"
+            class="flex-1 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-slate-300 transition-all"
+          >
+            🧪 Supplies
+          </button>
+        </div>
+
+        <div
+          id="shop-items-container"
+          class="flex flex-col gap-2.5 overflow-y-auto pr-1 min-h-[260px]"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: BARN / STORAGE INVENTORY -->
+    <div
+      id="modal-barn"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-purple-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-purple-400 flex items-center gap-2"
+          >
+            📦 Barn Silo
+          </h3>
+          <button
+            onclick="closeModal('modal-barn')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div
+          class="flex justify-between items-center bg-slate-800/80 p-2.5 rounded-xl border border-slate-700"
+        >
+          <span class="text-xs text-slate-300 font-semibold"
+            >Total Stock Value:</span
+          >
+          <span id="barn-total-value" class="font-pixel text-amber-400 text-xs"
+            >0 Gold</span
+          >
+        </div>
+
+        <div
+          id="barn-items-container"
+          class="flex flex-col gap-2 overflow-y-auto pr-1"
+        ></div>
+
+        <button
+          onclick="sellAllBarnItems()"
+          class="pixel-btn pixel-btn-amber w-full py-2.5 rounded-xl font-heading text-xs text-white uppercase tracking-wider"
+        >
+          Sell All Goods 💰
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 5: MARKET TRADE BOARD -->
+    <div
+      id="modal-market"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-rose-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-rose-400 flex items-center gap-2"
+          >
+            📈 Commodity Market
+          </h3>
+          <button
+            onclick="closeModal('modal-market')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          id="market-trends-list"
+          class="flex flex-col gap-2 overflow-y-auto pr-1"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL 6: LEADERBOARD MODAL -->
+    <div
+      id="modal-leaderboard"
+      class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div
+        class="pixel-card w-full max-w-md rounded-3xl p-4 sm:p-5 bg-slate-900 border-2 border-yellow-500 flex flex-col gap-4 max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h3
+            class="font-heading text-lg text-yellow-400 flex items-center gap-2"
+          >
+            🏆 Farmer Leaderboard
+          </h3>
+          <button
+            onclick="closeModal('modal-leaderboard')"
+            class="text-slate-400 hover:text-white font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          id="leaderboard-list"
+          class="flex flex-col gap-2 overflow-y-auto pr-1"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      /* AUDIO SYNTHESIZER (Web Audio API) */
+      class SoundFX {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+        }
+        init() {
+          if (!this.ctx) {
+            const AudioContext =
+              window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+          }
+        }
+        playTone(freq, type = "sine", duration = 0.15, vol = 0.1) {
+          if (!this.enabled || !this.ctx) return;
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(
+              0.0001,
+              this.ctx.currentTime + duration,
+            );
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+          } catch (e) {}
+        }
+        playCoin() {
+          this.init();
+          this.playTone(987, "sine", 0.1, 0.12);
+          setTimeout(() => this.playTone(1318, "sine", 0.2, 0.12), 80);
+        }
+        playPlant() {
+          this.init();
+          this.playTone(280, "triangle", 0.1, 0.1);
+          setTimeout(() => this.playTone(420, "triangle", 0.12, 0.1), 50);
+        }
+        playHarvest() {
+          this.init();
+          this.playTone(523, "triangle", 0.08, 0.12);
+          setTimeout(() => this.playTone(659, "triangle", 0.08, 0.12), 60);
+          setTimeout(() => this.playTone(783, "triangle", 0.15, 0.12), 120);
+        }
+        playAnimal() {
+          this.init();
+          this.playTone(220, "sawtooth", 0.15, 0.08);
+          setTimeout(() => this.playTone(180, "sawtooth", 0.2, 0.08), 100);
+        }
+      }
+      const SFX = new SoundFX();
+
+      function toggleSFX() {
+        SFX.enabled = !SFX.enabled;
+        document.getElementById("btn-audio-toggle").innerText = SFX.enabled
+          ? "🔊 SFX: On"
+          : "🔇 SFX: Off";
+      }
+
+      function toggleMusic() {
+        const music = document.getElementById("bg-music");
+        const btn = document.getElementById("btn-music-toggle");
+        if (music.paused) {
+          music
+            .play()
+            .then(() => {
+              btn.innerText = "🎵 Music: On";
+            })
+            .catch(() => {
+              showToast("Click anywhere on screen to enable music playback.");
+            });
+        } else {
+          music.pause();
+          btn.innerText = "🎵 Music: Off";
+        }
+      }
+
+      /* DATA CATALOGS */
+      const CROP_TYPES = {
+        wheat: {
+          id: "wheat",
+          name: "Wheat",
+          seedCost: 15,
+          sellPrice: 40,
+          growthSeconds: 3600,
+          pestResistance: 0.8,
+          exp: 10,
+          icon: "🌾",
+          reqLevel: 1,
+        },
+        corn: {
+          id: "corn",
+          name: "Corn",
+          seedCost: 40,
+          sellPrice: 120,
+          growthSeconds: 14400,
+          pestResistance: 0.7,
+          exp: 25,
+          icon: "🌽",
+          reqLevel: 1,
+        },
+        tomato: {
+          id: "tomato",
+          name: "Tomatoes",
+          seedCost: 90,
+          sellPrice: 290,
+          growthSeconds: 43200,
+          pestResistance: 0.6,
+          exp: 55,
+          icon: "🍅",
+          reqLevel: 2,
+        },
+        pumpkin: {
+          id: "pumpkin",
+          name: "Pumpkins",
+          seedCost: 200,
+          sellPrice: 750,
+          growthSeconds: 86400,
+          pestResistance: 0.5,
+          exp: 120,
+          icon: "🎃",
+          reqLevel: 3,
+        },
+        golden_berry: {
+          id: "golden_berry",
+          name: "Ancient Berry",
+          seedCost: 500,
+          sellPrice: 2200,
+          growthSeconds: 172800,
+          pestResistance: 0.3,
+          exp: 300,
+          icon: "🌟",
+          reqLevel: 4,
+        },
+      };
+
+      const LIVESTOCK_TYPES = {
+        chicken: {
+          id: "chicken",
+          name: "Chicken",
+          cost: 100,
+          product: "Egg",
+          prodPrice: 25,
+          prodSeconds: 1800,
+          feedReq: 1,
+          reqLevel: 1,
+          icon: "🐔",
+          color: 0xffffff,
+        },
+        goat: {
+          id: "goat",
+          name: "Goat",
+          cost: 300,
+          product: "Goat Milk",
+          prodPrice: 85,
+          prodSeconds: 7200,
+          feedReq: 2,
+          reqLevel: 1,
+          icon: "🐐",
+          color: 0xdddddd,
+        },
+        pig: {
+          id: "pig",
+          name: "Pig",
+          cost: 650,
+          product: "Truffle",
+          prodPrice: 220,
+          prodSeconds: 21600,
+          feedReq: 3,
+          reqLevel: 2,
+          icon: "🐖",
+          color: 0xffb6c1,
+        },
+        cow: {
+          id: "cow",
+          name: "Cow",
+          cost: 1200,
+          product: "Cow Milk",
+          prodPrice: 480,
+          prodSeconds: 43200,
+          feedReq: 4,
+          reqLevel: 2,
+          icon: "🐄",
+          color: 0x443322,
+        },
+        sheep: {
+          id: "sheep",
+          name: "Sheep",
+          cost: 1800,
+          product: "Fine Wool",
+          prodPrice: 750,
+          prodSeconds: 64800,
+          feedReq: 4,
+          reqLevel: 3,
+          icon: "🐑",
+          color: 0xfafafa,
+        },
+        horse: {
+          id: "horse",
+          name: "Horse",
+          cost: 3500,
+          product: "Horseshoe",
+          prodPrice: 1600,
+          prodSeconds: 86400,
+          feedReq: 5,
+          reqLevel: 4,
+          icon: "🐎",
+          color: 0x8b4513,
+        },
+      };
+
+      const SUPPLIES = {
+        feed: {
+          id: "feed",
+          name: "Animal Feed Sack",
+          cost: 20,
+          icon: "🌾",
+          desc: "Feeds 1 animal to start production cycle.",
+        },
+        pesticide: {
+          id: "pesticide",
+          name: "Pesticide Spray",
+          cost: 35,
+          icon: "🧪",
+          desc: "Cures crop pest infestation before crops rot.",
+        },
+        vet_med: {
+          id: "vet_med",
+          name: "Veterinary Medicine",
+          cost: 50,
+          icon: "💉",
+          desc: "Heals sick livestock back to full health.",
+        },
+        fertilizer: {
+          id: "fertilizer",
+          name: "Speed Fertilizer",
+          cost: 60,
+          icon: "⚡",
+          desc: "Accelerates current crop growth by 4 hours.",
+        },
+        yield_boost: {
+          id: "yield_boost",
+          name: "Super Tonic",
+          cost: 120,
+          icon: "🧪",
+          desc: "Increases next crop or animal payout.",
+        },
+      };
+
+      /* GAME STATE */
+      let gameState = {
+        playerName: "Farmer John",
+        career: "crop", // 'crop' or 'livestock'
+        gold: 300,
+        lifetimeEarnings: 300,
+        level: 1,
+        xp: 0,
+        lastSaved: Date.now(),
+        equippedSeed: "wheat",
+        weather: "sunny",
+        devFastMode: false,
+        inventory: {
+          seeds: { wheat: 6, corn: 2, tomato: 0, pumpkin: 0, golden_berry: 0 },
+          supplies: {
+            feed: 8,
+            pesticide: 3,
+            vet_med: 2,
+            fertilizer: 2,
+            yield_boost: 1,
+          },
+          produce: {
+            wheat: 0,
+            corn: 0,
+            tomato: 0,
+            pumpkin: 0,
+            golden_berry: 0,
+            Egg: 0,
+            "Goat Milk": 0,
+            Truffle: 0,
+            "Cow Milk": 0,
+            "Fine Wool": 0,
+            Horseshoe: 0,
+          },
+        },
+        cropsGrid: Array(16)
+          .fill(null)
+          .map((_, i) => ({
+            id: i,
+            crop: null,
+            plantedAt: null,
+            lastCaredAt: null,
+            isInfested: false,
+            infestedAt: null,
+            isWatered: false,
+            isDead: false,
+          })),
+        livestock: [
+          {
+            id: 1,
+            type: "chicken",
+            name: "Cluckers",
+            fed: true,
+            age: "adult",
+            prodStartedAt: Date.now(),
+            isSick: false,
+          },
+          {
+            id: 2,
+            type: "chicken",
+            name: "Feathers",
+            fed: true,
+            age: "adult",
+            prodStartedAt: Date.now(),
+            isSick: false,
+          },
+        ],
+        marketMultiplier: {
+          wheat: 1.0,
+          corn: 1.0,
+          tomato: 1.0,
+          pumpkin: 1.0,
+          golden_berry: 1.0,
+          Egg: 1.0,
+          "Goat Milk": 1.0,
+          Truffle: 1.0,
+          "Cow Milk": 1.0,
+          "Fine Wool": 1.0,
+          Horseshoe: 1.0,
+        },
+      };
+
+      let selectedTileIndex = null;
+      let currentShopTab = "seeds";
+
+      function loadSavedGame() {
+        const saved = localStorage.getItem("voxel_farm_save_v2.5");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            gameState = { ...gameState, ...parsed };
+            if (!gameState.career) gameState.career = "crop";
+            calculateOfflineProgress();
+            document
+              .getElementById("btn-menu-continue")
+              .classList.remove("hidden");
+            return true;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        return false;
+      }
+
+      function saveGame() {
+        gameState.lastSaved = Date.now();
+        localStorage.setItem("voxel_farm_save_v2.5", JSON.stringify(gameState));
+      }
+
+      function calculateOfflineProgress() {
+        const now = Date.now();
+        const elapsedSec = Math.floor((now - gameState.lastSaved) / 1000);
+        if (elapsedSec <= 5) return;
+
+        gameState.cropsGrid.forEach((plot) => {
+          if (plot.crop && !plot.isDead) {
+            if (plot.isInfested && plot.infestedAt) {
+              const infestedSec = (now - plot.infestedAt) / 1000;
+              if (infestedSec >= 7200) {
+                plot.isDead = true;
+                plot.isInfested = false;
+              }
+            }
+          }
+        });
+
+        showToast(
+          `Welcome back! Progress updated for ${Math.floor(elapsedSec / 60)}m away.`,
+        );
+      }
+
+      function toggleDevFastMode() {
+        gameState.devFastMode = !gameState.devFastMode;
+        document.getElementById("btn-dev-toggle").innerText =
+          gameState.devFastMode ? "⏩ Fast Mode: ON" : "⏩ Fast Mode: Off";
+        showToast(
+          gameState.devFastMode
+            ? "Dev Fast Mode ON (All growth reduced to ~10s)"
+            : "Normal Time Mode Restored",
+        );
+        buildDedicatedEnvironment();
+      }
+
+      /* THREE.JS SCENE INITIALIZATION */
+      let scene, camera, renderer;
+      let voxelGridGroup, livestockGroup, decorGroup;
+      let tileMeshes = [];
+      let raycaster, mouse;
+
+      function createPixelTexture(colorHex) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = colorHex;
+        ctx.fillRect(0, 0, 16, 16);
+        for (let x = 0; x < 16; x++) {
+          for (let y = 0; y < 16; y++) {
+            if (Math.random() < 0.25) {
+              ctx.fillStyle =
+                Math.random() > 0.5
+                  ? "rgba(255,255,255,0.12)"
+                  : "rgba(0,0,0,0.12)";
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
+        ctx.strokeRect(0, 0, 16, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
+        return texture;
+      }
+
+      const grassTex = createPixelTexture("#4ade80");
+      const soilTex = createPixelTexture("#78350f");
+      const wetSoilTex = createPixelTexture("#451a03");
+      const deadSoilTex = createPixelTexture("#292524");
+      const woodTex = createPixelTexture("#a16207");
+      const redBarnTex = createPixelTexture("#dc2626");
+
+      function init3D() {
+        const container = document.getElementById("webgl-container");
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x38bdf8);
+        scene.fog = new THREE.FogExp2(0x38bdf8, 0.015);
+
+        const aspect = container.clientWidth / container.clientHeight;
+        const d = 14;
+        camera = new THREE.OrthographicCamera(
+          -d * aspect,
+          d * aspect,
+          d,
+          -d,
+          1,
+          1000,
+        );
+        camera.position.set(22, 24, 22);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({
+          antialias: false,
+          powerPreference: "high-performance",
+        });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfffaed, 0.85);
+        sunLight.position.set(25, 40, 15);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        scene.add(sunLight);
+
+        voxelGridGroup = new THREE.Group();
+        scene.add(voxelGridGroup);
+        livestockGroup = new THREE.Group();
+        scene.add(livestockGroup);
+        decorGroup = new THREE.Group();
+        scene.add(decorGroup);
+
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+
+        container.addEventListener("pointerdown", onCanvasClick);
+        window.addEventListener("resize", onWindowResize);
+      }
+
+      function buildDedicatedEnvironment() {
+        while (voxelGridGroup.children.length > 0)
+          voxelGridGroup.remove(voxelGridGroup.children[0]);
+        while (decorGroup.children.length > 0)
+          decorGroup.remove(decorGroup.children[0]);
+        while (livestockGroup.children.length > 0)
+          livestockGroup.remove(livestockGroup.children[0]);
+        tileMeshes = [];
+
+        const isCropFarmer = gameState.career === "crop";
+
+        if (isCropFarmer) {
+          // CROPS FIELD LAYOUT
+          const boxGeo = new THREE.BoxGeometry(1.8, 1, 1.8);
+          let index = 0;
+          for (let x = -2; x < 2; x++) {
+            for (let z = -2; z < 2; z++) {
+              const plotData = gameState.cropsGrid[index];
+              let matTex = soilTex;
+              if (plotData.isDead) matTex = deadSoilTex;
+              else if (plotData.isWatered) matTex = wetSoilTex;
+
+              const mat = new THREE.MeshLambertMaterial({ map: matTex });
+              const mesh = new THREE.Mesh(boxGeo, mat);
+              mesh.position.set(x * 2.2, 0, z * 2.2);
+              mesh.receiveShadow = true;
+              mesh.castShadow = true;
+              mesh.userData = { type: "crop_tile", index: index };
+
+              voxelGridGroup.add(mesh);
+              tileMeshes.push(mesh);
+
+              if (plotData.crop) {
+                const plantMesh = createPlantMesh(plotData);
+                plantMesh.position.set(x * 2.2, 0.5, z * 2.2);
+                voxelGridGroup.add(plantMesh);
+              }
+              index++;
+            }
+          }
+
+          const baseGeo = new THREE.BoxGeometry(18, 0.8, 18);
+          const baseMesh = new THREE.Mesh(
+            baseGeo,
+            new THREE.MeshLambertMaterial({ map: grassTex }),
+          );
+          baseMesh.position.set(-0.5, -0.9, -0.5);
+          baseMesh.receiveShadow = true;
+          voxelGridGroup.add(baseMesh);
+
+          buildWindmill(-6.5, 0, -6.5);
+          buildScarecrow(5, 0, 0);
+        } else {
+          // LIVESTOCK BARNYARD LAYOUT
+          const baseGeo = new THREE.BoxGeometry(20, 0.8, 20);
+          const baseMesh = new THREE.Mesh(
+            baseGeo,
+            new THREE.MeshLambertMaterial({ map: grassTex }),
+          );
+          baseMesh.position.set(0, -0.9, 0);
+          baseMesh.receiveShadow = true;
+          voxelGridGroup.add(baseMesh);
+
+          buildRedBarn(4, 0, -4);
+          buildPastureFences();
+          buildHayBales(-5, 0, -5);
+
+          updateLivestockMeshes();
+        }
+      }
+
+      function buildRedBarn(x, y, z) {
+        const barnGroup = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(6, 4, 6);
+        const bodyMat = new THREE.MeshLambertMaterial({ map: redBarnTex });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(0, 2, 0);
+        body.castShadow = true;
+        barnGroup.add(body);
+
+        const roofGeo = new THREE.BoxGeometry(6.6, 1.5, 6.6);
+        const roofMat = new THREE.MeshLambertMaterial({ map: woodTex });
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.set(0, 4.5, 0);
+        roof.castShadow = true;
+        barnGroup.add(roof);
+
+        barnGroup.position.set(x, y, z);
+        decorGroup.add(barnGroup);
+      }
+
+      function buildWindmill(x, y, z) {
+        const millGroup = new THREE.Group();
+        const towerGeo = new THREE.BoxGeometry(2.5, 7, 2.5);
+        const tower = new THREE.Mesh(
+          towerGeo,
+          new THREE.MeshLambertMaterial({ map: woodTex }),
+        );
+        tower.position.set(0, 3.5, 0);
+        tower.castShadow = true;
+        millGroup.add(tower);
+
+        millGroup.position.set(x, y, z);
+        decorGroup.add(millGroup);
+      }
+
+      function buildScarecrow(x, y, z) {
+        const scGroup = new THREE.Group();
+        const poleGeo = new THREE.BoxGeometry(0.2, 3, 0.2);
+        const pole = new THREE.Mesh(
+          poleGeo,
+          new THREE.MeshLambertMaterial({ map: woodTex }),
+        );
+        pole.position.y = 1.5;
+        scGroup.add(pole);
+        scGroup.position.set(x, y, z);
+        decorGroup.add(scGroup);
+      }
+
+      function buildPastureFences() {
+        const fenceMat = new THREE.MeshLambertMaterial({ map: woodTex });
+        const fenceGeo = new THREE.BoxGeometry(0.2, 1, 10);
+        const f1 = new THREE.Mesh(fenceGeo, fenceMat);
+        f1.position.set(-8, 0.5, 0);
+        decorGroup.add(f1);
+        const f2 = new THREE.Mesh(fenceGeo, fenceMat);
+        f2.position.set(1, 0.5, 0);
+        decorGroup.add(f2);
+      }
+
+      function buildHayBales(x, y, z) {
+        const hayGeo = new THREE.BoxGeometry(1.2, 0.8, 1.2);
+        const hayMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+        const hay = new THREE.Mesh(hayGeo, hayMat);
+        hay.position.set(x, y + 0.4, z);
+        decorGroup.add(hay);
+      }
+
+      function createPlantMesh(plot) {
+        const group = new THREE.Group();
+        const cropInfo = CROP_TYPES[plot.crop];
+        const now = Date.now();
+        const elapsed = (now - plot.plantedAt) / 1000;
+        const targetSec = gameState.devFastMode ? 10 : cropInfo.growthSeconds;
+        const progress = Math.min(100, (elapsed / targetSec) * 100);
+
+        let plantColor = 0x22c55e;
+        if (plot.isDead) plantColor = 0x292524;
+        else if (plot.isInfested) plantColor = 0x84cc16;
+        else if (progress >= 100) plantColor = 0xeab308;
+
+        const scale = plot.isDead ? 0.3 : 0.2 + (progress / 100) * 0.7;
+        const stemGeo = new THREE.BoxGeometry(
+          0.3 * scale,
+          1.4 * scale,
+          0.3 * scale,
+        );
+        const stem = new THREE.Mesh(
+          stemGeo,
+          new THREE.MeshLambertMaterial({ color: plantColor }),
+        );
+        stem.position.y = (1.4 * scale) / 2;
+        group.add(stem);
+
+        if (progress >= 100 && !plot.isDead) {
+          const fruitGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+          const fruit = new THREE.Mesh(
+            fruitGeo,
+            new THREE.MeshLambertMaterial({ color: plantColor }),
+          );
+          fruit.position.y = 1.4 * scale + 0.2;
+          group.add(fruit);
+        }
+        return group;
+      }
+
+      function updateLivestockMeshes() {
+        while (livestockGroup.children.length > 0)
+          livestockGroup.remove(livestockGroup.children[0]);
+        if (gameState.career !== "livestock") return;
+
+        gameState.livestock.forEach((animal, i) => {
+          const typeData =
+            LIVESTOCK_TYPES[animal.type] || LIVESTOCK_TYPES.chicken;
+          const animalGroup = new THREE.Group();
+          const size = 0.9;
+
+          const bodyGeo = new THREE.BoxGeometry(size, size * 0.8, size * 1.2);
+          const bodyMat = new THREE.MeshLambertMaterial({
+            color: animal.isSick ? 0x84cc16 : typeData.color,
+          });
+          const body = new THREE.Mesh(bodyGeo, bodyMat);
+          body.position.y = (size * 0.8) / 2;
+          animalGroup.add(body);
+
+          const xPos = -4 + (i % 4) * 2.2;
+          const zPos = -2 + Math.floor(i / 4) * 2.2;
+          animalGroup.position.set(xPos, 0, zPos);
+
+          livestockGroup.add(animalGroup);
+        });
+      }
+
+      /* RAYCASTER & INTERACTION */
+      function onCanvasClick(event) {
+        if (document.querySelector(".fixed:not(.hidden)")) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(tileMeshes);
+
+        if (intersects.length > 0 && gameState.career === "crop") {
+          const hit = intersects[0].object;
+          openTileInspector(hit.userData.index);
+        } else {
+          closeTileInspector();
+        }
+      }
+
+      function openTileInspector(tileIndex) {
+        selectedTileIndex = tileIndex;
+        const plot = gameState.cropsGrid[tileIndex];
+        const inspector = document.getElementById("tile-inspector");
+        const titleEl = document.getElementById("tile-name");
+        const statusEl = document.getElementById("tile-status-text");
+        const actionsEl = document.getElementById("tile-actions");
+
+        inspector.classList.remove("hidden");
+        actionsEl.innerHTML = "";
+
+        if (!plot.crop) {
+          titleEl.innerText = `Plot #${tileIndex + 1} (Empty)`;
+          statusEl.innerHTML = `Status: Ready for planting`;
+          const seedName = CROP_TYPES[gameState.equippedSeed].name;
+          const seedCount =
+            gameState.inventory.seeds[gameState.equippedSeed] || 0;
+
+          actionsEl.innerHTML = `
+                    <button onclick="plantEquippedSeed(${tileIndex})" class="col-span-2 pixel-btn pixel-btn-green py-2 px-3 rounded-xl text-xs font-heading text-white">
+                        Plant ${seedName} (${seedCount} Left)
+                    </button>
+                `;
+        } else if (plot.isDead) {
+          titleEl.innerText = `Rotted Plot #${tileIndex + 1}`;
+          statusEl.innerHTML = `<span class="text-rose-400 font-bold">☠️ Crop Rotted from Infestation!</span>`;
+          actionsEl.innerHTML = `
+                    <button onclick="clearDeadPlot(${tileIndex})" class="col-span-2 pixel-btn pixel-btn-red py-2 px-3 rounded-xl text-xs font-heading text-white">
+                        Clear Rotted Plot 🧹
+                    </button>
+                `;
+        } else {
+          const cropInfo = CROP_TYPES[plot.crop];
+          const now = Date.now();
+          const elapsed = (now - plot.plantedAt) / 1000;
+          const targetSec = gameState.devFastMode ? 10 : cropInfo.growthSeconds;
+          const progress = Math.min(
+            100,
+            Math.floor((elapsed / targetSec) * 100),
+          );
+
+          titleEl.innerText = `${cropInfo.icon} ${cropInfo.name}`;
+
+          if (plot.isInfested) {
+            statusEl.innerHTML = `<span class="text-amber-400 font-bold animate-pulse">⚠️ PEST INFESTATION! Treat before rot!</span>`;
+            actionsEl.innerHTML = `
+                        <button onclick="cureCropInfestation(${tileIndex})" class="col-span-2 pixel-btn pixel-btn-amber py-2 px-3 rounded-xl text-xs font-heading text-white">
+                            Spray Pesticide 🧪 (${gameState.inventory.supplies.pesticide || 0})
+                        </button>
+                    `;
+          } else if (progress >= 100) {
+            statusEl.innerHTML = `<span class="text-emerald-400 font-bold">Status: Ready to Harvest! 🎉</span>`;
+            actionsEl.innerHTML = `
+                        <button onclick="harvestCropTile(${tileIndex})" class="col-span-2 pixel-btn pixel-btn-green py-2 px-3 rounded-xl text-xs font-heading text-white">
+                            Harvest Produce ✨
+                        </button>
+                    `;
+          } else {
+            const remainingSec = Math.max(0, Math.floor(targetSec - elapsed));
+            const hrs = Math.floor(remainingSec / 3600);
+            const mins = Math.floor((remainingSec % 3600) / 60);
+
+            statusEl.innerHTML = `
+                        <span>Growth: ${progress}%</span>
+                        <span class="text-slate-400 text-[11px]">Time Left: ${hrs}h ${mins}m</span>
+                    `;
+
+            actionsEl.innerHTML = `
+                        <button onclick="waterCropTile(${tileIndex})" ${plot.isWatered ? 'disabled class="opacity-50 bg-slate-700 py-2 text-xs text-slate-400 rounded-xl"' : 'class="pixel-btn bg-blue-600 hover:bg-blue-500 py-2 text-xs font-heading text-white rounded-xl"'}>
+                            ${plot.isWatered ? "Watered 💧" : "Water 💧"}
+                        </button>
+                        <button onclick="fertilizeCropTile(${tileIndex})" class="pixel-btn bg-purple-600 hover:bg-purple-500 py-2 text-xs font-heading text-white rounded-xl">
+                            Fertilize ⚡
+                        </button>
+                    `;
+          }
+        }
+      }
+
+      function closeTileInspector() {
+        selectedTileIndex = null;
+        document.getElementById("tile-inspector").classList.add("hidden");
+      }
+
+      function onWindowResize() {
+        const container = document.getElementById("webgl-container");
+        const aspect = container.clientWidth / container.clientHeight;
+        const d = 14;
+        camera.left = -d * aspect;
+        camera.right = d * aspect;
+        camera.top = d;
+        camera.bottom = -d;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      }
+
+      function plantEquippedSeed(tileIndex) {
+        const seedId = gameState.equippedSeed;
+        if ((gameState.inventory.seeds[seedId] || 0) <= 0) {
+          showToast(`No ${CROP_TYPES[seedId].name} seeds left! Buy in shop.`);
+          return;
+        }
+
+        gameState.inventory.seeds[seedId]--;
+        gameState.cropsGrid[tileIndex] = {
+          id: tileIndex,
+          crop: seedId,
+          plantedAt: Date.now(),
+          lastCaredAt: Date.now(),
+          isInfested: false,
+          infestedAt: null,
+          isWatered: gameState.weather === "rain",
+          isDead: false,
+        };
+
+        SFX.playPlant();
+        buildDedicatedEnvironment();
+        openTileInspector(tileIndex);
+        updateUI();
+        saveGame();
+        showToast(`Planted ${CROP_TYPES[seedId].name}!`);
+      }
+
+      function cureCropInfestation(tileIndex) {
+        if ((gameState.inventory.supplies.pesticide || 0) <= 0) {
+          showToast(`No Pesticide available! Buy in shop.`);
+          return;
+        }
+        gameState.inventory.supplies.pesticide--;
+        gameState.cropsGrid[tileIndex].isInfested = false;
+        gameState.cropsGrid[tileIndex].infestedAt = null;
+
+        SFX.playTone(500, "sine", 0.15, 0.1);
+        buildDedicatedEnvironment();
+        openTileInspector(tileIndex);
+        updateUI();
+        saveGame();
+        showToast(`Infestation cured! Crop saved! 🧪`);
+      }
+
+      function waterCropTile(tileIndex) {
+        gameState.cropsGrid[tileIndex].isWatered = true;
+        buildDedicatedEnvironment();
+        openTileInspector(tileIndex);
+        saveGame();
+        showToast(`Soil watered! Boosted growth rate 💧`);
+      }
+
+      function fertilizeCropTile(tileIndex) {
+        if ((gameState.inventory.supplies.fertilizer || 0) <= 0) {
+          showToast(`No Speed Fertilizer left!`);
+          return;
+        }
+        gameState.inventory.supplies.fertilizer--;
+        gameState.cropsGrid[tileIndex].plantedAt -= 14400000;
+
+        SFX.playTone(800, "triangle", 0.15, 0.15);
+        buildDedicatedEnvironment();
+        openTileInspector(tileIndex);
+        updateUI();
+        saveGame();
+        showToast(`Fertilized! Growth boosted by 4 hours ⚡`);
+      }
+
+      function clearDeadPlot(tileIndex) {
+        gameState.cropsGrid[tileIndex] = {
+          id: tileIndex,
+          crop: null,
+          plantedAt: null,
+          isInfested: false,
+          isWatered: false,
+          isDead: false,
+        };
+        buildDedicatedEnvironment();
+        closeTileInspector();
+        saveGame();
+        showToast(`Cleared rotted plot.`);
+      }
+
+      function harvestCropTile(tileIndex) {
+        const plot = gameState.cropsGrid[tileIndex];
+        const cropInfo = CROP_TYPES[plot.crop];
+
+        gameState.inventory.produce[plot.crop] =
+          (gameState.inventory.produce[plot.crop] || 0) + 1;
+        addXP(cropInfo.exp);
+
+        gameState.cropsGrid[tileIndex] = {
+          id: tileIndex,
+          crop: null,
+          plantedAt: null,
+          isInfested: false,
+          isWatered: false,
+          isDead: false,
+        };
+
+        SFX.playHarvest();
+        buildDedicatedEnvironment();
+        closeTileInspector();
+        updateUI();
+        saveGame();
+        showToast(`Harvested 1x ${cropInfo.name}! (+${cropInfo.exp} XP) ✨`);
+      }
+
+      /* LIVESTOCK ACTIONS */
+      function feedAnimal(index) {
+        const animal = gameState.livestock[index];
+        const req = LIVESTOCK_TYPES[animal.type].feedReq;
+        if ((gameState.inventory.supplies.feed || 0) < req) {
+          showToast(`Need ${req}x Feed Sacks! Buy in Shop.`);
+          return;
+        }
+        gameState.inventory.supplies.feed -= req;
+        animal.fed = true;
+        animal.prodStartedAt = Date.now();
+        SFX.playAnimal();
+        updateLivestockModal();
+        updateUI();
+        saveGame();
+        showToast(`Fed ${animal.name}! 🌾`);
+      }
+
+      function collectAnimalProduct(index) {
+        const animal = gameState.livestock[index];
+        const typeInfo = LIVESTOCK_TYPES[animal.type];
+
+        gameState.inventory.produce[typeInfo.product] =
+          (gameState.inventory.produce[typeInfo.product] || 0) + 1;
+        animal.fed = false;
+
+        SFX.playHarvest();
+        updateLivestockModal();
+        updateUI();
+        saveGame();
+        showToast(`Collected 1x ${typeInfo.product}! 🥚`);
+      }
+
+      /* MENU & NAVIGATION */
+      function exitToMainMenu() {
+        saveGame();
+        document.getElementById("game-hud").classList.add("hidden");
+        document.getElementById("game-nav").classList.add("hidden");
+        document.getElementById("modal-main-menu").classList.remove("hidden");
+        document.getElementById("btn-menu-continue").classList.remove("hidden");
+      }
+
+      function resumeGameFromMenu() {
+        document.getElementById("modal-main-menu").classList.add("hidden");
+        document.getElementById("game-hud").classList.remove("hidden");
+        document.getElementById("game-nav").classList.remove("hidden");
+        buildDedicatedEnvironment();
+        updateUI();
+      }
+
+      function openCareerModal() {
+        document.getElementById("modal-main-menu").classList.add("hidden");
+        document.getElementById("modal-career").classList.remove("hidden");
+      }
+
+      function selectCareer(type) {
+        gameState.career = type;
+        document.getElementById("card-spec-crop").className =
+          type === "crop"
+            ? "cursor-pointer bg-emerald-950/80 border-2 border-emerald-400 rounded-2xl p-4 flex flex-col items-center text-center"
+            : "cursor-pointer bg-slate-800/80 border-2 border-slate-700 rounded-2xl p-4 flex flex-col items-center text-center";
+        document.getElementById("card-spec-livestock").className =
+          type === "livestock"
+            ? "cursor-pointer bg-amber-950/80 border-2 border-amber-400 rounded-2xl p-4 flex flex-col items-center text-center"
+            : "cursor-pointer bg-slate-800/80 border-2 border-slate-700 rounded-2xl p-4 flex flex-col items-center text-center";
+      }
+
+      function confirmCareerSelection() {
+        const nameInput = document
+          .getElementById("input-farmer-name")
+          .value.trim();
+        if (nameInput) gameState.playerName = nameInput;
+
+        if (gameState.career === "crop") {
+          document.getElementById("nav-btn-crops").classList.remove("hidden");
+          document.getElementById("nav-btn-livestock").classList.add("hidden");
+        } else {
+          document.getElementById("nav-btn-crops").classList.add("hidden");
+          document
+            .getElementById("nav-btn-livestock")
+            .classList.remove("hidden");
+        }
+
+        closeModal("modal-career");
+        document.getElementById("game-hud").classList.remove("hidden");
+        document.getElementById("game-nav").classList.remove("hidden");
+
+        buildDedicatedEnvironment();
+        updateUI();
+        saveGame();
+        showToast(`Welcome to your farm, ${gameState.playerName}! 🚜`);
+      }
+
+      /* ECONOMY & STORE FIXES */
+      function sellAllBarnItems() {
+        let total = 0;
+        Object.keys(gameState.inventory.produce).forEach((key) => {
+          const count = gameState.inventory.produce[key] || 0;
+          if (count > 0) {
+            const isCrop = CROP_TYPES[key] !== undefined;
+            let basePrice = isCrop ? CROP_TYPES[key].sellPrice : 0;
+            if (!isCrop) {
+              const found = Object.values(LIVESTOCK_TYPES).find(
+                (l) => l.product === key,
+              );
+              if (found) basePrice = found.prodPrice;
+            }
+            const mult = gameState.marketMultiplier[key] || 1.0;
+            total += count * Math.floor(basePrice * mult);
+            gameState.inventory.produce[key] = 0;
+          }
+        });
+
+        if (total > 0) {
+          gameState.gold += total;
+          gameState.lifetimeEarnings += total;
+          SFX.playCoin();
+          updateUI();
+          updateBarnModal();
+          saveGame();
+          showToast(`Sold barn goods for +${total} Gold! 💰`);
+        } else {
+          showToast(`Barn is empty!`);
+        }
+      }
+
+      function switchShopTab(t) {
+        currentShopTab = t;
+        const tabs = ["seeds", "animals", "supplies"];
+        tabs.forEach((tabKey) => {
+          const btn = document.getElementById(`shop-tab-${tabKey}`);
+          if (tabKey === t) {
+            btn.className =
+              "flex-1 py-1.5 text-xs font-bold rounded-xl bg-blue-600 text-white transition-all shadow-md";
+          } else {
+            btn.className =
+              "flex-1 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 transition-all";
+          }
+        });
+        updateShopModal();
+      }
+
+      function buyShopItem(category, id) {
+        if (category === "seeds") {
+          const item = CROP_TYPES[id];
+          if (gameState.level < item.reqLevel) {
+            showToast(`Requires Level ${item.reqLevel}!`);
+            return;
+          }
+          if (gameState.gold < item.seedCost) {
+            showToast(`Not enough gold!`);
+            return;
+          }
+          gameState.gold -= item.seedCost;
+          gameState.inventory.seeds[id] =
+            (gameState.inventory.seeds[id] || 0) + 1;
+        } else if (category === "animals") {
+          const item = LIVESTOCK_TYPES[id];
+          if (gameState.level < item.reqLevel) {
+            showToast(`Requires Level ${item.reqLevel}!`);
+            return;
+          }
+          if (gameState.gold < item.cost) {
+            showToast(`Not enough gold!`);
+            return;
+          }
+          gameState.gold -= item.cost;
+          gameState.livestock.push({
+            id: Date.now(),
+            type: id,
+            name: `${item.name} #${gameState.livestock.length + 1}`,
+            fed: true,
+            age: "adult",
+            prodStartedAt: Date.now(),
+            isSick: false,
+          });
+          updateLivestockMeshes();
+        } else if (category === "supplies") {
+          const item = SUPPLIES[id];
+          if (gameState.gold < item.cost) {
+            showToast(`Not enough gold!`);
+            return;
+          }
+          gameState.gold -= item.cost;
+          gameState.inventory.supplies[id] =
+            (gameState.inventory.supplies[id] || 0) + 1;
+        }
+        SFX.playCoin();
+        updateUI();
+        updateShopModal();
+        saveGame();
+        showToast(`Purchased successfully! 🛒`);
+      }
+
+      function updateShopModal() {
+        const container = document.getElementById("shop-items-container");
+        container.innerHTML = "";
+
+        if (currentShopTab === "seeds") {
+          Object.values(CROP_TYPES).forEach((crop) => {
+            const isLocked = gameState.level < crop.reqLevel;
+            const card = document.createElement("div");
+            card.className = `p-3 rounded-2xl border flex justify-between items-center ${isLocked ? "bg-slate-900/60 border-slate-800 opacity-75" : "bg-slate-800/80 border-slate-700"}`;
+            card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${crop.icon}</span>
+                            <div>
+                                <h4 class="font-heading text-sm text-slate-100">${crop.name} Seeds</h4>
+                                <p class="text-[11px] text-slate-400">Yield: ${crop.sellPrice}G | Time: ${Math.floor(crop.growthSeconds / 3600)}h</p>
+                                <p class="text-xs text-amber-400 font-pixel mt-0.5">🪙 ${crop.seedCost} Gold ${isLocked ? `<span class="text-rose-400 text-[10px] ml-1">(Lvl ${crop.reqLevel})</span>` : ""}</p>
+                            </div>
+                        </div>
+                        <button onclick="buyShopItem('seeds', '${crop.id}')" ${isLocked ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-700 text-slate-500 text-xs font-bold"' : 'class="pixel-btn pixel-btn-green py-1.5 px-3 rounded-xl text-xs font-bold text-white"'}>
+                            ${isLocked ? "Locked" : "Buy"}
+                        </button>
+                    `;
+            container.appendChild(card);
+          });
+        } else if (currentShopTab === "animals") {
+          Object.values(LIVESTOCK_TYPES).forEach((animal) => {
+            const isLocked = gameState.level < animal.reqLevel;
+            const card = document.createElement("div");
+            card.className = `p-3 rounded-2xl border flex justify-between items-center ${isLocked ? "bg-slate-900/60 border-slate-800 opacity-75" : "bg-slate-800/80 border-slate-700"}`;
+            card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${animal.icon}</span>
+                            <div>
+                                <h4 class="font-heading text-sm text-slate-100">${animal.name}</h4>
+                                <p class="text-[11px] text-slate-400">Yields: ${animal.product} (${animal.prodPrice}G)</p>
+                                <p class="text-xs text-amber-400 font-pixel mt-0.5">🪙 ${animal.cost} Gold ${isLocked ? `<span class="text-rose-400 text-[10px] ml-1">(Lvl ${animal.reqLevel})</span>` : ""}</p>
+                            </div>
+                        </div>
+                        <button onclick="buyShopItem('animals', '${animal.id}')" ${isLocked ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-700 text-slate-500 text-xs font-bold"' : 'class="pixel-btn pixel-btn-amber py-1.5 px-3 rounded-xl text-xs font-bold text-white"'}>
+                            ${isLocked ? "Locked" : "Adopt"}
+                        </button>
+                    `;
+            container.appendChild(card);
+          });
+        } else if (currentShopTab === "supplies") {
+          Object.values(SUPPLIES).forEach((item) => {
+            const card = document.createElement("div");
+            card.className =
+              "p-3 rounded-2xl bg-slate-800/80 border border-slate-700 flex justify-between items-center";
+            card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${item.icon}</span>
+                            <div>
+                                <h4 class="font-heading text-sm text-slate-100">${item.name}</h4>
+                                <p class="text-[11px] text-slate-400">${item.desc}</p>
+                                <p class="text-xs text-amber-400 font-pixel mt-0.5">🪙 ${item.cost} Gold</p>
+                            </div>
+                        </div>
+                        <button onclick="buyShopItem('supplies', '${item.id}')" class="pixel-btn pixel-btn-green py-1.5 px-3 rounded-xl text-xs font-bold text-white">Buy</button>
+                    `;
+            container.appendChild(card);
+          });
+        }
+      }
+
+      function addXP(amount) {
+        gameState.xp += amount;
+        if (gameState.xp >= gameState.level * 100) {
+          gameState.level++;
+          showToast(`LEVEL UP! Reached Level ${gameState.level}! 🎉`);
+        }
+      }
+
+      function updateUI() {
+        document.getElementById("player-name").innerText = gameState.playerName;
+        document.getElementById("stat-gold").innerText = gameState.gold;
+        document.getElementById("stat-level").innerText = gameState.level;
+
+        const roleBadge = document.getElementById("player-role-badge");
+        if (gameState.career === "crop") {
+          roleBadge.innerText = "Crop Specialist";
+          roleBadge.className =
+            "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-700";
+        } else {
+          roleBadge.innerText = "Master Rancher";
+          roleBadge.className =
+            "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-700";
+        }
+      }
+
+      function updateLeaderboardModal() {
+        const container = document.getElementById("leaderboard-list");
+        container.innerHTML = "";
+
+        const leaders = [
+          { name: "HarvestKing99", gold: 25000, role: "Crop Specialist" },
+          {
+            name: gameState.playerName,
+            gold: gameState.lifetimeEarnings,
+            role:
+              gameState.career === "crop"
+                ? "Crop Specialist"
+                : "Master Rancher",
+            isPlayer: true,
+          },
+          { name: "VoxelRancher", gold: 18400, role: "Master Rancher" },
+          { name: "SunnyValley", gold: 12100, role: "Crop Specialist" },
+          { name: "OldMacDonald", gold: 8500, role: "Master Rancher" },
+        ].sort((a, b) => b.gold - a.gold);
+
+        leaders.forEach((l, i) => {
+          const card = document.createElement("div");
+          card.className = `p-3 rounded-2xl border flex justify-between items-center ${l.isPlayer ? "bg-amber-950/80 border-amber-400" : "bg-slate-800/80 border-slate-700"}`;
+          card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="font-pixel text-xs text-amber-400">#${i + 1}</span>
+                        <div>
+                            <h4 class="font-heading text-sm ${l.isPlayer ? "text-amber-300" : "text-slate-200"}">${l.name}</h4>
+                            <span class="text-[10px] text-slate-400">${l.role}</span>
+                        </div>
+                    </div>
+                    <span class="font-pixel text-xs text-amber-400">🪙 ${l.gold}</span>
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function updateCropsModal() {
+        const container = document.getElementById("crops-seed-list");
+        container.innerHTML = "";
+        Object.values(CROP_TYPES).forEach((crop) => {
+          const count = gameState.inventory.seeds[crop.id] || 0;
+          const isEquipped = gameState.equippedSeed === crop.id;
+          const card = document.createElement("div");
+          card.className = `p-3 rounded-2xl border flex items-center justify-between ${isEquipped ? "bg-emerald-950/60 border-emerald-400" : "bg-slate-800/80 border-slate-700"}`;
+          card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">${crop.icon}</span>
+                        <div>
+                            <h4 class="font-heading text-sm text-slate-100">${crop.name}</h4>
+                            <p class="text-[11px] text-slate-400">Seeds: ${count} | Time: ${Math.floor(crop.growthSeconds / 3600)}h</p>
+                        </div>
+                    </div>
+                    <button onclick="equipSeed('${crop.id}')" ${isEquipped ? 'disabled class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold"' : 'class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold"'}>
+                        ${isEquipped ? "Equipped" : "Equip"}
+                    </button>
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function equipSeed(cropId) {
+        gameState.equippedSeed = cropId;
+        updateCropsModal();
+        showToast(`Equipped ${CROP_TYPES[cropId].name} seeds!`);
+      }
+
+      function updateLivestockModal() {
+        const container = document.getElementById("livestock-list");
+        container.innerHTML = "";
+        gameState.livestock.forEach((animal, i) => {
+          const typeInfo =
+            LIVESTOCK_TYPES[animal.type] || LIVESTOCK_TYPES.chicken;
+          const elapsed = (Date.now() - animal.prodStartedAt) / 1000;
+          const targetSec = gameState.devFastMode ? 10 : typeInfo.prodSeconds;
+          const isReady = animal.fed && elapsed >= targetSec;
+          const card = document.createElement("div");
+          card.className = `p-3 rounded-2xl border bg-slate-800/80 border-slate-700 flex justify-between items-center`;
+          card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">${typeInfo.icon}</span>
+                        <div>
+                            <h4 class="font-heading text-sm text-amber-300">${animal.name}</h4>
+                            <p class="text-[11px] text-slate-400">${animal.fed ? (isReady ? "Ready to collect!" : "Producing...") : "Needs Feed 🌾"}</p>
+                        </div>
+                    </div>
+                    ${
+                      isReady
+                        ? `
+                        <button onclick="collectAnimalProduct(${i})" class="pixel-btn pixel-btn-green py-1.5 px-3 rounded-xl text-xs font-bold text-white">Collect</button>
+                    `
+                        : `
+                        <button onclick="feedAnimal(${i})" ${animal.fed ? 'disabled class="bg-slate-700 text-slate-400 py-1.5 px-3 rounded-xl text-xs font-bold opacity-60"' : 'class="pixel-btn bg-amber-600 py-1.5 px-3 rounded-xl text-xs font-bold text-white"'}>Feed</button>
+                    `
+                    }
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function updateBarnModal() {
+        const container = document.getElementById("barn-items-container");
+        container.innerHTML = "";
+        let total = 0;
+        Object.keys(gameState.inventory.produce).forEach((key) => {
+          const qty = gameState.inventory.produce[key] || 0;
+          if (qty > 0) {
+            const isCrop = CROP_TYPES[key] !== undefined;
+            let basePrice = isCrop ? CROP_TYPES[key].sellPrice : 0;
+            if (!isCrop) {
+              const found = Object.values(LIVESTOCK_TYPES).find(
+                (l) => l.product === key,
+              );
+              if (found) basePrice = found.prodPrice;
+            }
+            const price = Math.floor(
+              basePrice * (gameState.marketMultiplier[key] || 1.0),
+            );
+            total += qty * price;
+
+            const card = document.createElement("div");
+            card.className =
+              "p-3 rounded-2xl bg-slate-800/80 border border-slate-700 flex justify-between items-center";
+            card.innerHTML = `
+                        <span class="font-heading text-sm text-slate-200">${key} x${qty}</span>
+                        <span class="font-pixel text-xs text-amber-400">🪙 ${qty * price} Gold</span>
+                    `;
+            container.appendChild(card);
+          }
+        });
+        document.getElementById("barn-total-value").innerText = `${total} Gold`;
+      }
+
+      function updateMarketModal() {
+        const container = document.getElementById("market-trends-list");
+        container.innerHTML = "";
+        Object.keys(gameState.marketMultiplier).forEach((item) => {
+          const rate = gameState.marketMultiplier[item];
+          const card = document.createElement("div");
+          card.className =
+            "p-3 rounded-2xl bg-slate-800/80 border border-slate-700 flex justify-between items-center";
+          card.innerHTML = `
+                    <span class="font-heading text-sm text-slate-200">${item}</span>
+                    <span class="text-xs font-pixel ${rate > 1.0 ? "text-emerald-400" : "text-slate-400"}">${Math.floor(rate * 100)}% Price</span>
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function openModal(id) {
+        closeTileInspector();
+        if (id === "modal-crops") updateCropsModal();
+        else if (id === "modal-livestock") updateLivestockModal();
+        else if (id === "modal-shop") updateShopModal();
+        else if (id === "modal-barn") updateBarnModal();
+        else if (id === "modal-market") updateMarketModal();
+        else if (id === "modal-leaderboard") updateLeaderboardModal();
+
+        document.getElementById(id).classList.remove("hidden");
+      }
+
+      function closeModal(id) {
+        document.getElementById(id).classList.add("hidden");
+      }
+
+      function showToast(msg) {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className =
+          "bg-slate-900/95 border-2 border-emerald-400 text-white px-4 py-2.5 rounded-2xl shadow-2xl font-heading text-xs animate-toast backdrop-blur-md text-center my-1";
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 3200);
+      }
+
+      /* MAIN TICK LOOP */
+      function gameLoop() {
+        requestAnimationFrame(gameLoop);
+        renderer.render(scene, camera);
+      }
+
+      setInterval(() => {
+        const now = Date.now();
+
+        if (Math.random() < 0.015 && gameState.career === "crop") {
+          const planted = gameState.cropsGrid.filter(
+            (p) => p.crop && !p.isDead && !p.isInfested,
+          );
+          if (planted.length > 0) {
+            const target = planted[Math.floor(Math.random() * planted.length)];
+            target.isInfested = true;
+            target.infestedAt = now;
+            buildDedicatedEnvironment();
+            showToast(`⚠️ Pest infestation on Plot #${target.id + 1}!`);
+          }
+        }
+
+        gameState.cropsGrid.forEach((plot) => {
+          if (plot.isInfested && plot.infestedAt) {
+            if ((now - plot.infestedAt) / 1000 >= 7200) {
+              plot.isDead = true;
+              plot.isInfested = false;
+              buildDedicatedEnvironment();
+            }
+          }
+        });
+
+        if (selectedTileIndex !== null) openTileInspector(selectedTileIndex);
+      }, 1000);
+
+      window.onload = function () {
+        init3D();
+        const hasSave = loadSavedGame();
+        if (!hasSave) {
+          document.getElementById("modal-main-menu").classList.remove("hidden");
+        } else {
+          exitToMainMenu();
+        }
+        gameLoop();
+      };
+    </script>
+  </body>
+</html>
