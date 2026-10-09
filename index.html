@@ -99,11 +99,11 @@
         animation: toastUp 3.2s ease forwards;
       }
 
-      @media (max-width: 640px) {
+      /* @media (max-width: 640px) {
         .game-nav {
           display: flex;
         }
-      }
+      } */
     </style>
   </head>
   <body
@@ -358,20 +358,32 @@
     </header>
 
     <!-- FLOATING TOAST CONTAINER (z-[9999] so toasts render above open modals) -->
-    <div
+    <!-- <div
       id="toast-container"
       class="absolute top-28 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none w-11/12 max-w-md"
-    ></div>
+    ></div> -->
+      <div 
+    id="toast-container" 
+    class="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-sm"
+  ></div>
 
     <!-- BOTTOM HUD NAVIGATION -->
     <!-- <nav
       id="game-nav"
       class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-[96%] max-w-lg bg-slate-900/95 border-2 border-slate-700 rounded-2xl p-1.5 sm:p-2 shadow-2xl backdrop-blur-md flex items-center justify-around gap-1"
     > -->
-    <nav
+        <nav
+      id="game-nav"
+      class="hidden fixed bottom-0 left-0 right-0 z-30 w-[96%] max-w-lg bg-slate-900/95 border-2 border-slate-700 rounded-2xl p-1.5 sm:p-2 shadow-2xl backdrop-blur-md flex items-center justify-around gap-1"
+    >
+      <div
+    id="bottom-hud"
+    class="hidden fixed bottom-0 left-0 right-0 z-30 pb-safe p-2 sm:p-4 pointer-events-none flex justify-center items-end"
+  >
+    <!-- <nav
       id="game-nav"
       class="hidden absolute bottom-5 md:bottom-3 left-1/2 -translate-x-1/2 z-10 w-[96%] max-w-lg bg-slate-900/95 border-2 border-slate-700 rounded-2xl p-1.5 sm:p-2 shadow-2xl backdrop-blur-md flex items-center justify-around gap-1"
-    >
+    > -->
       <button
         id="nav-btn-crops"
         onclick="openModal('modal-crops')"
