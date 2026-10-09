@@ -165,97 +165,6 @@
     </div>
 
     <!-- TOP HUD STATUS BAR -->
-    <!-- <header
-      id="game-hud"
-      class="hidden absolute top-0 left-0 right-0 z-10 p-2 sm:p-4 pointer-events-none flex justify-between items-start"
-    >
-      <div
-        class="pointer-events-auto bg-slate-900/90 border-2 border-emerald-500 rounded-2xl p-2 sm:p-3 flex items-center gap-3 shadow-2xl backdrop-blur-md"
-      >
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-2xl font-bold shadow-inner border-2 border-emerald-400"
-          id="avatar-icon"
-        >
-          🧑‍🌾
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span
-              id="player-name"
-              class="font-heading text-sm sm:text-base text-emerald-300"
-              >Farmer John</span
-            >
-            <span
-              id="player-role-badge"
-              class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-700"
-              >Crop Specialist</span
-            >
-          </div>
-          <div
-            class="flex items-center gap-3 mt-0.5 text-xs sm:text-sm font-semibold"
-          >
-            <span class="text-amber-400 flex items-center gap-1 font-pixel"
-              ><span class="text-base">🪙</span>
-              <span id="stat-gold">300</span></span
-            >
-            <span class="text-purple-300 flex items-center gap-1 font-pixel"
-              ><span class="text-base">⭐</span> Lvl
-              <span id="stat-level">1</span></span
-            >
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="pointer-events-auto bg-slate-900/90 border-2 border-blue-500 rounded-2xl p-2 sm:p-3 text-right flex flex-col items-end shadow-2xl backdrop-blur-md"
-      >
-        <div class="flex items-center gap-2">
-          <span id="weather-icon" class="text-xl sm:text-2xl animate-bounce"
-            >☀️</span
-          >
-          <span
-            id="weather-text"
-            class="font-heading text-xs sm:text-sm text-amber-300"
-            >Sunny</span
-          >
-        </div>
-        <div
-          class="text-[10px] sm:text-xs text-slate-300 font-mono mt-0.5"
-          id="game-time-display"
-        >
-          Day 1 - 08:00 AM
-        </div>
-        <div class="flex sm:flex-col md:flex-row items-center gap-1.5 mt-2">
-          <button
-            id="btn-dev-toggle"
-            onclick="toggleDevFastMode()"
-            class="px-2 py-1 rounded-lg bg-amber-900/80 hover:bg-amber-800 text-[10px] sm:text-xs text-amber-200 border border-amber-600 font-bold"
-          >
-            ⏩ Fast Mode: Off
-          </button>
-          <button
-            id="btn-music-toggle"
-            onclick="toggleMusic()"
-            class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs border border-slate-600"
-          >
-            🎵 Music: Off
-          </button>
-          <button
-            id="btn-audio-toggle"
-            onclick="toggleSFX()"
-            class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs border border-slate-600"
-          >
-            🔊 SFX: On
-          </button>
-          <button
-            onclick="exitToMainMenu()"
-            class="px-2.5 py-1 rounded-lg bg-rose-900 hover:bg-rose-800 text-[10px] sm:text-xs text-rose-200 border border-rose-600 font-bold"
-          >
-            🚪 Exit
-          </button>
-        </div>
-      </div>
-    </header> -->
     <header
       id="game-hud"
       class="hidden absolute top-0 left-0 right-0 z-10 p-2 sm:p-4 pointer-events-none flex flex-col sm:flex-row justify-between items-stretch sm:items-start gap-2 max-w-full overflow-hidden"
@@ -365,7 +274,7 @@
 
     <div
       id="toast-container"
-      class="fixed top-26 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none w-11/12 max-w-md"
+      class="absolute top-28 left-14 z-[9999] pointer-events-none w-11/12 max-w-md"
     ></div>
 
     <!-- BOTTOM HUD NAVIGATION -->
